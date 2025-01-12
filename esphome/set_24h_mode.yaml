@@ -1,0 +1,28 @@
+esphome:
+  name: set_24h_mode
+  platform: esp32dev
+  board: nodemcuv2
+
+wifi:
+  ssid: "your_ssid"
+  password: "your_password"
+
+logger:
+
+api:
+
+ota:
+
+i2c:
+  sda: D2
+  scl: D1
+  scan: True
+
+custom_component:
+  - lambda: |-
+      auto ivClock = new IV3_clock();
+      App.register_component(ivClock);
+      bool mode = ivClock->get_hour_mode();
+      ESP_LOGD("main", "Current hour mode: %s", mode ? "12h" : "24h");
+      ivClock->set_hour_mode(!mode);
+      return {ivClock};

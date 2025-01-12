@@ -1,0 +1,134 @@
+esphome:
+  name: iv3clock
+  platform: ESP32
+  board: nodemcu-32s
+  build_path: .build/custom_components/iv3_clock
+
+
+safe_mode:
+
+ota:
+  - platform: esphome
+    password: !secret ota_password
+
+bluetooth_proxy:
+  active: false
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+logger:
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: !secret api_encryption_key
+  services:
+    - service: set_time
+      variables:
+        year: int
+        month: int
+        day: int
+        hour: int
+        minute: int
+        second: int
+      then:
+        - lambda: |-
+            auto ivClock = id(iv3_clock).get_component<IV3_clock>();
+            ivClock->time.year = year;
+            ivClock->time.month = month;
+            ivClock->time.day = day;
+            ivClock->time.hour = hour;
+            ivClock->time.minute = minute;
+            ivClock->time.second = second;
+            ivClock->set_time();
+
+i2c:
+  sda: GPIO10
+  scl: GPIO4
+  scan: True
+
+external_components:
+  - source:
+      type: local
+      path: /Users/tim/Library/CloudStorage/OneDrive-Personal/Documents/Documents/Personal/Projects/IV3/IV3_lib/esphome
+
+custom_component:
+  - lambda: |-
+      auto ivClock = new IV3_clock();
+      App.register_component(ivClock);
+      return {ivClock};
+    components:
+    - id: iv3_clock
+
+interval:
+  - interval: 60s
+    then:
+      - lambda: |-
+          auto ivClock = id(iv3_clock).get_component<IV3_clock>();
+          ivClock->get_status();
+          id(iv3_brightness).publish_state(ivClock->get_brightness());
+      - lambda: |-
+          auto ivClock = id(iv3_clock).get_component<IV3_clock>();
+          ivClock->get_time();
+          char buffer[20];
+          sprintf(buffer, "%02d:%02d:%02d %02d/%02d/%02d", ivClock->time.hour, ivClock->time.minute, ivClock->time.second, ivClock->time.day, ivClock->time.month, ivClock->time.year);
+          id(iv3_time).publish_state(buffer);
+
+sensor:
+  - platform: custom
+    lambda: |-
+      auto iv3_brightness = new Sensor();
+      App.register_sensor(iv3_brightness);
+      return {iv3_brightness};
+    sensors:
+      - name: "IV3 Brightness"
+        id: iv3_brightness
+
+text_sensor:
+  - platform: custom
+    lambda: |-
+      auto iv3_time = new TextSensor();
+      App.register_text_sensor(iv3_time);
+      return {iv3_time};
+    text_sensors:
+      - name: "IV3 Time"
+        id: iv3_time
+
+switch:
+  - platform: template
+    name: "IV3 Clock Mode"
+    turn_on_action:
+      - lambda: |-
+          auto ivClock = id(iv3_clock).get_component<IV3_clock>();
+          ivClock->clock_mode();
+
+  - platform: template
+    name: "IV3 Reset"
+    turn_on_action:
+      - lambda: |-
+          auto ivClock = id(iv3_clock).get_component<IV3_clock>();
+          ivClock->reset();
+
+  - platform: template
+    name: "IV3 Night Fade"
+    turn_on_action:
+      - lambda: |-
+          auto ivClock = id(iv3_clock).get_component<IV3_clock>();
+          ivClock->set_night_fade(true);
+    turn_off_action:
+      - lambda: |-
+          auto ivClock = id(iv3_clock).get_component<IV3_clock>();
+          ivClock->set_night_fade(false);
+
+  - platform: template
+    name: "IV3 24 Hour Mode"
+    turn_on_action:
+      - lambda: |-
+          auto ivClock = id(iv3_clock).get_component<IV3_clock>();
+          ivClock->set_hour_mode(false);
+    turn_off_action:
+      - lambda: |-
+          auto ivClock = id(iv3_clock).get_component<IV3_clock>();
+          ivClock->set_hour_mode(true);

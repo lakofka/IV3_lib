@@ -1,0 +1,33 @@
+esphome:
+  name: user_display
+  platform: esp32dev
+  board: nodemcuv2
+
+wifi:
+  ssid: "your_ssid"
+  password: "your_password"
+
+logger:
+
+api:
+
+ota:
+
+i2c:
+  sda: D2
+  scl: D1
+  scan: True
+
+custom_component:
+  - lambda: |-
+      auto ivClock = new IV3_clock();
+      auto numbs = new numberWang();
+      App.register_component(ivClock);
+      App.register_component(numbs);
+      int cnt = 0;
+      while (cnt < 10000) {
+        ivClock->user_display(numbs->Wanger(cnt));
+        cnt++;
+        delay(10);
+      }
+      return {ivClock, numbs};

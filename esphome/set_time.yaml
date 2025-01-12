@@ -1,0 +1,32 @@
+esphome:
+  name: set_time
+  platform: esp32dev
+  board: nodemcuv2
+
+wifi:
+  ssid: "your_ssid"
+  password: "your_password"
+
+logger:
+
+api:
+
+ota:
+
+i2c:
+  sda: D2
+  scl: D1
+  scan: True
+
+custom_component:
+  - lambda: |-
+      auto ivClock = new IV3_clock();
+      App.register_component(ivClock);
+      ivClock->time.year = 20;
+      ivClock->time.month = 7;
+      ivClock->time.day = 1;
+      ivClock->time.hour = 15;
+      ivClock->time.minute = 45;
+      ivClock->time.second = 30;
+      ivClock->set_time();
+      return {ivClock};

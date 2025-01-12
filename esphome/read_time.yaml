@@ -1,0 +1,27 @@
+esphome:
+  name: read_time
+  platform: esp32dev
+  board: nodemcuv2
+
+wifi:
+  ssid: "your_ssid"
+  password: "your_password"
+
+logger:
+
+api:
+
+ota:
+
+i2c:
+  sda: D2
+  scl: D1
+  scan: True
+
+custom_component:
+  - lambda: |-
+      auto ivClock = new IV3_clock();
+      App.register_component(ivClock);
+      ivClock->get_time();
+      ESP_LOGD("main", "Time: %02d:%02d:%02d %02d/%02d/%02d", ivClock->time.hour, ivClock->time.minute, ivClock->time.second, ivClock->time.day, ivClock->time.month, ivClock->time.year);
+      return {ivClock};
